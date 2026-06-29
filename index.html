@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FutureFlow Economic Planner</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Future economic analysis</p>
+          <h1>Forecast your cash flow without living in a spreadsheet.</h1>
+          <p class="hero-copy">
+            Add recurring constants like paychecks, rent, utilities, and weekly spending, then layer in one-off variables to see how your balance changes over time.
+          </p>
+        </div>
+        <div class="summary-card" aria-live="polite">
+          <span>Projected balance</span>
+          <strong id="projectedBalance">$0.00</strong>
+          <small id="projectionRange">Today through forecast end</small>
+        </div>
+      </section>
+
+      <section class="control-panel" aria-label="Forecast settings">
+        <label>
+          Starting balance
+          <input id="startingBalance" type="number" step="0.01" value="600" />
+        </label>
+        <label>
+          Start date
+          <input id="startDate" type="date" />
+        </label>
+        <label>
+          End date
+          <input id="endDate" type="date" />
+        </label>
+        <button id="recalculateButton" type="button">Recalculate forecast</button>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel constants-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Constants</p>
+              <h2>Recurring items</h2>
+            </div>
+            <button id="addConstant" type="button">Add</button>
+          </div>
+          <div id="constantsList" class="entry-list"></div>
+        </aside>
+
+        <section class="panel variables-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Variables</p>
+              <h2>One-time changes</h2>
+            </div>
+            <button id="addVariable" type="button">Add</button>
+          </div>
+          <div id="variablesList" class="entry-list"></div>
+        </section>
+
+        <section class="panel output-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Analysis</p>
+              <h2>Projected balance</h2>
+            </div>
+            <div class="metric-pills">
+              <span id="maxBalance">Max: $0.00</span>
+              <span id="minBalance">Min: $0.00</span>
+            </div>
+          </div>
+          <canvas id="balanceChart" height="240" aria-label="Projected balance line chart" role="img"></canvas>
+          <div class="timeline-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Change</th>
+                  <th>Total after</th>
+                </tr>
+              </thead>
+              <tbody id="timelineBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <template id="constantTemplate">
+      <article class="entry-card constant-card">
+        <input class="entry-label" aria-label="Constant label" placeholder="Pay, rent, weekly use" />
+        <input class="entry-amount" aria-label="Constant amount" type="number" step="0.01" />
+        <select class="entry-frequency" aria-label="Frequency">
+          <option value="weekly">Weekly</option>
+          <option value="biweekly">Biweekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+        <input class="entry-date" aria-label="First effective date" type="date" />
+        <button class="remove-entry" type="button" aria-label="Remove entry">×</button>
+      </article>
+    </template>
+
+    <template id="variableTemplate">
+      <article class="entry-card variable-card">
+        <input class="entry-label" aria-label="Variable label" placeholder="Groceries, repair, bonus" />
+        <input class="entry-amount" aria-label="Variable amount" type="number" step="0.01" />
+        <input class="entry-date" aria-label="Variable date" type="date" />
+        <button class="remove-entry" type="button" aria-label="Remove entry">×</button>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
