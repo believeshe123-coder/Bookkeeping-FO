@@ -8,22 +8,12 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="hero">
-        <div>
-          <p class="eyebrow">Future economic analysis</p>
-          <h1>Forecast your cash flow without living in a spreadsheet.</h1>
-          <p class="hero-copy">
-            Add recurring constants like paychecks, rent, utilities, and weekly spending, then layer in one-off variables to see how your balance changes over time.
-          </p>
-        </div>
+      <section class="control-panel" aria-label="Forecast settings">
         <div class="summary-card" aria-live="polite">
           <span>Projected balance</span>
           <strong id="projectedBalance">$0.00</strong>
           <small id="projectionRange">Today through forecast end</small>
         </div>
-      </section>
-
-      <section class="control-panel" aria-label="Forecast settings">
         <label>
           Starting balance
           <input id="startingBalance" type="number" step="0.01" value="600" />
@@ -40,28 +30,6 @@
       </section>
 
       <section class="workspace">
-        <aside class="panel constants-panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">Constants</p>
-              <h2>Recurring items</h2>
-            </div>
-            <button id="addConstant" type="button">Add</button>
-          </div>
-          <div id="constantsList" class="entry-list"></div>
-        </aside>
-
-        <section class="panel variables-panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">Variables</p>
-              <h2>One-time changes</h2>
-            </div>
-            <button id="addVariable" type="button">Add</button>
-          </div>
-          <div id="variablesList" class="entry-list"></div>
-        </section>
-
         <section class="panel output-panel">
           <div class="panel-heading">
             <div>
@@ -73,7 +41,11 @@
               <span id="minBalance">Min: $0.00</span>
             </div>
           </div>
-          <canvas id="balanceChart" height="240" aria-label="Projected balance line chart" role="img"></canvas>
+          <div class="chart-wrap">
+            <canvas id="balanceChart" height="320" aria-label="Interactive projected balance line chart" role="img" tabindex="0"></canvas>
+            <div id="chartTooltip" class="chart-tooltip" role="status" aria-live="polite" hidden></div>
+          </div>
+          <p class="chart-hint">Hover or focus the graph to inspect balances. Click a point to jump to its timeline event.</p>
           <div class="timeline-wrap">
             <table>
               <thead>
@@ -88,6 +60,30 @@
             </table>
           </div>
         </section>
+
+        <aside class="right-rail" aria-label="Inputs">
+          <section class="panel constants-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Constants</p>
+                <h2>Recurring items</h2>
+              </div>
+              <button id="addConstant" type="button">Add</button>
+            </div>
+            <div id="constantsList" class="entry-list"></div>
+          </section>
+
+          <section class="panel variables-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Variables</p>
+                <h2>One-time changes</h2>
+              </div>
+              <button id="addVariable" type="button">Add</button>
+            </div>
+            <div id="variablesList" class="entry-list"></div>
+          </section>
+        </aside>
       </section>
     </main>
 
@@ -99,7 +95,10 @@
           <option value="weekly">Weekly</option>
           <option value="biweekly">Biweekly</option>
           <option value="monthly">Monthly</option>
+          <option value="semiannual">Every 6 months</option>
+          <option value="custom-months">Every ___ months</option>
         </select>
+        <input class="entry-interval" aria-label="Custom month interval" type="number" min="1" step="1" placeholder="Months" hidden />
         <input class="entry-date" aria-label="First effective date" type="date" />
         <button class="remove-entry" type="button" aria-label="Remove entry">×</button>
       </article>
