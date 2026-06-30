@@ -15,10 +15,6 @@
             <strong id="projectedBalance">$0.00</strong>
             <small id="projectionRange">Today through forecast end</small>
           </div>
-          <svg class="metric-sparkline" viewBox="0 0 120 68" aria-hidden="true">
-            <path class="sparkline-fill" d="M0 68H120V11c-11 13-18 5-27 14s-11 21-25 20-14 18-29 16-17 9-39 7Z" />
-            <path class="sparkline-line" d="M0 67c22 2 24-9 39-7s15-17 29-16 16-11 25-20 16-1 27-14" />
-          </svg>
         </article>
         <article class="metric-card">
           <div>
@@ -26,7 +22,6 @@
             <strong id="startingBalanceSummary">$0.00</strong>
             <small id="startingBalanceDate">on Today</small>
           </div>
-          <div class="metric-icon wallet-icon" aria-hidden="true">▱</div>
         </article>
         <article class="metric-card">
           <div>
@@ -34,7 +29,6 @@
             <strong id="maxBalance">$0.00</strong>
             <small id="maxBalanceDate">on Today</small>
           </div>
-          <div class="metric-icon trend-up-icon" aria-hidden="true">⌁</div>
         </article>
         <article class="metric-card">
           <div>
@@ -42,7 +36,6 @@
             <strong id="minBalance">$0.00</strong>
             <small id="minBalanceDate">on Today</small>
           </div>
-          <div class="metric-icon trend-down-icon" aria-hidden="true">⌁</div>
         </article>
       </section>
 
@@ -62,6 +55,9 @@
         <div class="button-stack">
           <button id="recalculateButton" type="button">Recalculate forecast</button>
           <button id="saveLocalButton" class="secondary-button" type="button">Save locally</button>
+          <button id="downloadPlanButton" class="secondary-button" type="button">Download</button>
+          <button id="uploadPlanButton" class="secondary-button" type="button">Upload</button>
+          <input id="uploadPlanInput" class="visually-hidden" type="file" accept="application/json,.json" />
           <small id="saveStatus" class="save-status" aria-live="polite">Not saved yet</small>
         </div>
       </section>

@@ -47,6 +47,9 @@ const elements = {
   trendLineToggle: document.querySelector('#trendLineToggle'),
   chartTooltip: document.querySelector('#chartTooltip'),
   saveLocalButton: document.querySelector('#saveLocalButton'),
+  downloadPlanButton: document.querySelector('#downloadPlanButton'),
+  uploadPlanButton: document.querySelector('#uploadPlanButton'),
+  uploadPlanInput: document.querySelector('#uploadPlanInput'),
   saveStatus: document.querySelector('#saveStatus')
 };
 
@@ -96,6 +99,9 @@ elements.saveLocalButton.addEventListener('click', () => {
   saveLocalPlan();
   updateSaveStatus('Saved locally');
 });
+elements.downloadPlanButton.addEventListener('click', downloadPlan);
+elements.uploadPlanButton.addEventListener('click', () => elements.uploadPlanInput.click());
+elements.uploadPlanInput.addEventListener('change', uploadPlan);
 ['input', 'change'].forEach((eventName) => {
   document.querySelector('.control-panel').addEventListener(eventName, recalculate);
 });
@@ -138,7 +144,6 @@ function renderEntryList(type, container, template) {
 
 function createEntrySummary(type, entry, index) {
   const summary = document.createElement('div');
-  const icon = document.createElement('div');
   const copy = document.createElement('div');
   const title = document.createElement('strong');
   const details = document.createElement('small');
@@ -148,9 +153,6 @@ function createEntrySummary(type, entry, index) {
   const meta = type === 'constants' ? `${frequencyLabel(entry)} • Next: ${dateFormatter.format(nextEntryDate(entry))}` : dateFormatter.format(parseDate(entry.date));
 
   summary.className = 'entry-summary';
-  icon.className = 'entry-summary-icon';
-  icon.setAttribute('aria-hidden', 'true');
-  icon.textContent = entryIcon(type, index);
   copy.className = 'entry-summary-copy';
   title.textContent = entry.label || 'Untitled';
   details.textContent = meta;
@@ -166,7 +168,7 @@ function createEntrySummary(type, entry, index) {
   });
 
   copy.append(title, details);
-  summary.append(icon, copy, amount, menu);
+  summary.append(copy, amount, menu);
   return summary;
 }
 
@@ -187,11 +189,6 @@ function nextEntryDate(entry) {
 function entryAccent(type, index) {
   const colors = type === 'constants' ? ['#25c078', '#8a5cf6', '#f8b421', '#5c93ff', '#ff5c9a'] : ['#8a5cf6', '#ff6b7d', '#25c078', '#5c93ff'];
   return colors[index % colors.length];
-}
-
-function entryIcon(type, index) {
-  if (type === 'variables') return ['🔧', '💸', '🎁', '🧾'][index % 4];
-  return ['💵', '🏠', '🛡️', '💡', '🛒'][index % 5];
 }
 
 function updateEntry(type, index, node) {
@@ -248,8 +245,8 @@ function loadLocalPlan() {
   }
 }
 
-function saveLocalPlan() {
-  const payload = {
+function planPayload() {
+  return {
     startingBalance: elements.startingBalance.value,
     startDate: elements.startDate.value,
     endDate: elements.endDate.value,
@@ -259,7 +256,92 @@ function saveLocalPlan() {
     state,
     savedAt: new Date().toISOString()
   };
-  localStorage.setItem(storageKey, JSON.stringify(payload));
+}
+
+function saveLocalPlan() {
+  localStorage.setItem(storageKey, JSON.stringify(planPayload()));
+}
+
+function downloadPlan() {
+  const payload = planPayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const downloadLink = document.createElement('a');
+  const objectUrl = URL.createObjectURL(blob);
+  downloadLink.href = objectUrl;
+  downloadLink.download = `futureflow-plan-${payload.savedAt.slice(0, 10)}.json`;
+  document.body.append(downloadLink);
+  downloadLink.click();
+  downloadLink.remove();
+  URL.revokeObjectURL(objectUrl);
+  updateSaveStatus('Downloaded plan');
+}
+
+function uploadPlan(event) {
+  const [file] = event.target.files;
+  if (!file) return;
+  const reader = new FileReader();
+  reader.addEventListener('load', () => {
+    try {
+      applyImportedPlan(JSON.parse(reader.result));
+      updateSaveStatus('Uploaded plan');
+    } catch (error) {
+      console.warn('Unable to upload FutureFlow plan', error);
+      updateSaveStatus('Upload failed');
+    } finally {
+      event.target.value = '';
+    }
+  });
+  reader.addEventListener('error', () => {
+    updateSaveStatus('Upload failed');
+    event.target.value = '';
+  });
+  reader.readAsText(file);
+}
+
+function applyImportedPlan(plan) {
+  const imported = normalizePlan(plan);
+  elements.startingBalance.value = imported.startingBalance;
+  elements.startDate.value = imported.startDate;
+  elements.endDate.value = imported.endDate;
+  elements.chartStartDate.value = imported.chartStartDate;
+  elements.chartEndDate.value = imported.chartEndDate;
+  elements.trendLineToggle.checked = imported.showTrendLine;
+  state.constants = imported.state.constants;
+  state.variables = imported.state.variables;
+  editingEntries.constants = null;
+  editingEntries.variables = null;
+  renderInputs();
+  recalculate();
+}
+
+function normalizePlan(plan) {
+  if (!plan || typeof plan !== 'object' || !plan.state) throw new Error('Invalid plan file');
+  return {
+    startingBalance: plan.startingBalance ?? 0,
+    startDate: plan.startDate || iso(today),
+    endDate: plan.endDate || iso(addMonths(today, 30)),
+    chartStartDate: plan.chartStartDate || plan.startDate || iso(today),
+    chartEndDate: plan.chartEndDate || plan.endDate || iso(addMonths(today, 1)),
+    showTrendLine: plan.showTrendLine ?? true,
+    state: {
+      constants: normalizeEntries(plan.state.constants, true),
+      variables: normalizeEntries(plan.state.variables, false)
+    }
+  };
+}
+
+function normalizeEntries(entries, hasFrequency) {
+  if (!Array.isArray(entries)) return [];
+  const allowedFrequencies = new Set(['weekly', 'biweekly', 'monthly', 'semiannual', 'custom-months']);
+  return entries.map((entry) => ({
+    label: String(entry?.label || 'Untitled'),
+    amount: Number(entry?.amount || 0),
+    date: entry?.date || iso(today),
+    ...(hasFrequency ? {
+      frequency: allowedFrequencies.has(entry?.frequency) ? entry.frequency : 'monthly',
+      intervalMonths: Math.max(1, Number.parseInt(entry?.intervalMonths, 10) || 1)
+    } : {})
+  }));
 }
 
 function updateSaveStatus(message) {
