@@ -9,6 +9,7 @@ FutureFlow is a lightweight browser-based cash-flow forecaster inspired by a per
 - Add one-time variables for irregular expenses or income.
 - Automatically generate a chronological projection with running totals.
 - View maximum and minimum projected balances plus a canvas-based balance chart.
+- Automatically save your plan in the browser with an optional manual local save button.
 
 ## Run locally
 

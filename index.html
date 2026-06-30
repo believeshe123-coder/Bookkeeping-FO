@@ -26,7 +26,11 @@
           End date
           <input id="endDate" type="date" />
         </label>
-        <button id="recalculateButton" type="button">Recalculate forecast</button>
+        <div class="button-stack">
+          <button id="recalculateButton" type="button">Recalculate forecast</button>
+          <button id="saveLocalButton" class="secondary-button" type="button">Save locally</button>
+          <small id="saveStatus" class="save-status" aria-live="polite">Not saved yet</small>
+        </div>
       </section>
 
       <section class="workspace">

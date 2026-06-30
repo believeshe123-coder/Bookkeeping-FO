@@ -1,6 +1,7 @@
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const today = new Date();
+const storageKey = 'futureflow-local-save';
 const iso = (date) => date.toISOString().slice(0, 10);
 const addDays = (date, days) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 const addMonths = (date, months) => new Date(date.getFullYear(), date.getMonth() + months, date.getDate());
@@ -9,7 +10,7 @@ const parseDate = (value) => {
   return new Date(`${value || fallback}T00:00:00`);
 };
 
-const state = {
+const defaultState = {
   constants: [
     { label: 'Pay', amount: 1250, frequency: 'biweekly', date: iso(addDays(today, 2)) },
     { label: 'Weekly use', amount: -150, frequency: 'weekly', date: iso(addDays(today, 1)) },
@@ -35,7 +36,9 @@ const elements = {
   minBalance: document.querySelector('#minBalance'),
   timelineBody: document.querySelector('#timelineBody'),
   chart: document.querySelector('#balanceChart'),
-  chartTooltip: document.querySelector('#chartTooltip')
+  chartTooltip: document.querySelector('#chartTooltip'),
+  saveLocalButton: document.querySelector('#saveLocalButton'),
+  saveStatus: document.querySelector('#saveStatus')
 };
 
 const chartState = {
@@ -48,8 +51,13 @@ const chartState = {
   layout: null
 };
 
-elements.startDate.value = iso(today);
-elements.endDate.value = iso(addMonths(today, 30));
+const savedPlan = loadLocalPlan();
+const state = savedPlan?.state || structuredClone(defaultState);
+
+elements.startingBalance.value = savedPlan?.startingBalance ?? elements.startingBalance.value;
+elements.startDate.value = savedPlan?.startDate || iso(today);
+elements.endDate.value = savedPlan?.endDate || iso(addMonths(today, 30));
+updateSaveStatus(savedPlan ? 'Loaded local save' : 'No local save found');
 
 document.querySelector('#addConstant').addEventListener('click', () => {
   state.constants.push({ label: 'New constant', amount: 0, frequency: 'monthly', intervalMonths: 1, date: elements.startDate.value });
@@ -64,6 +72,10 @@ document.querySelector('#addVariable').addEventListener('click', () => {
 });
 
 document.querySelector('#recalculateButton').addEventListener('click', recalculate);
+elements.saveLocalButton.addEventListener('click', () => {
+  saveLocalPlan();
+  updateSaveStatus('Saved locally');
+});
 ['input', 'change'].forEach((eventName) => {
   document.querySelector('.control-panel').addEventListener(eventName, recalculate);
 });
@@ -143,6 +155,32 @@ function nextDate(date, item) {
   return addMonths(date, 1);
 }
 
+function loadLocalPlan() {
+  try {
+    const rawSave = localStorage.getItem(storageKey);
+    return rawSave ? JSON.parse(rawSave) : null;
+  } catch (error) {
+    console.warn('Unable to load local FutureFlow save', error);
+    return null;
+  }
+}
+
+function saveLocalPlan() {
+  const payload = {
+    startingBalance: elements.startingBalance.value,
+    startDate: elements.startDate.value,
+    endDate: elements.endDate.value,
+    state,
+    savedAt: new Date().toISOString()
+  };
+  localStorage.setItem(storageKey, JSON.stringify(payload));
+}
+
+function updateSaveStatus(message) {
+  if (!elements.saveStatus) return;
+  elements.saveStatus.textContent = message;
+}
+
 function recalculate() {
   const start = parseDate(elements.startDate.value);
   const end = parseDate(elements.endDate.value);
@@ -159,6 +197,8 @@ function recalculate() {
   elements.minBalance.textContent = `Min: ${currency.format(Math.min(...balances))}`;
   renderTimeline(rows);
   drawChart(rows, Number(elements.startingBalance.value || 0), start, end);
+  saveLocalPlan();
+  updateSaveStatus(`Autosaved ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
 }
 
 function renderTimeline(rows) {
