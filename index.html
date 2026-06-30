@@ -45,8 +45,28 @@
               <span id="minBalance">Min: $0.00</span>
             </div>
           </div>
+          <div class="chart-controls" aria-label="Graph time range controls">
+            <label>
+              Graph start
+              <input id="chartStartDate" type="date" />
+            </label>
+            <label>
+              Graph end
+              <input id="chartEndDate" type="date" />
+            </label>
+            <div class="chart-quick-ranges" aria-label="Quick graph ranges">
+              <button class="secondary-button" type="button" data-chart-range="1">1 month</button>
+              <button class="secondary-button" type="button" data-chart-range="3">3 months</button>
+              <button class="secondary-button" type="button" data-chart-range="6">6 months</button>
+              <button class="secondary-button" type="button" data-chart-range="all">Full forecast</button>
+            </div>
+            <label class="trend-toggle">
+              <input id="trendLineToggle" type="checkbox" checked />
+              Show trend line
+            </label>
+          </div>
           <div class="chart-wrap">
-            <canvas id="balanceChart" height="320" aria-label="Interactive projected balance line chart" role="img" tabindex="0"></canvas>
+            <canvas id="balanceChart" height="320" aria-label="Interactive projected balance line chart with zero and month markers" role="img" tabindex="0"></canvas>
             <div id="chartTooltip" class="chart-tooltip" role="status" aria-live="polite" hidden></div>
           </div>
           <p class="chart-hint">Hover or focus the graph to inspect balances. Click a point to jump to its timeline event.</p>
