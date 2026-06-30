@@ -32,8 +32,14 @@ const elements = {
   variablesList: document.querySelector('#variablesList'),
   projectedBalance: document.querySelector('#projectedBalance'),
   projectionRange: document.querySelector('#projectionRange'),
+  startingBalanceSummary: document.querySelector('#startingBalanceSummary'),
+  startingBalanceDate: document.querySelector('#startingBalanceDate'),
   maxBalance: document.querySelector('#maxBalance'),
+  maxBalanceDate: document.querySelector('#maxBalanceDate'),
   minBalance: document.querySelector('#minBalance'),
+  minBalanceDate: document.querySelector('#minBalanceDate'),
+  maxBalancePill: document.querySelector('#maxBalancePill'),
+  minBalancePill: document.querySelector('#minBalancePill'),
   timelineBody: document.querySelector('#timelineBody'),
   chart: document.querySelector('#balanceChart'),
   chartStartDate: document.querySelector('#chartStartDate'),
@@ -56,6 +62,7 @@ const chartState = {
 
 const savedPlan = loadLocalPlan();
 const state = savedPlan?.state || structuredClone(defaultState);
+const editingEntries = { constants: null, variables: null };
 
 elements.startingBalance.value = savedPlan?.startingBalance ?? elements.startingBalance.value;
 elements.startDate.value = savedPlan?.startDate || iso(today);
@@ -67,12 +74,14 @@ updateSaveStatus(savedPlan ? 'Loaded local save' : 'No local save found');
 
 document.querySelector('#addConstant').addEventListener('click', () => {
   state.constants.push({ label: 'New constant', amount: 0, frequency: 'monthly', intervalMonths: 1, date: elements.startDate.value });
+  editingEntries.constants = state.constants.length - 1;
   renderInputs();
   recalculate();
 });
 
 document.querySelector('#addVariable').addEventListener('click', () => {
   state.variables.push({ label: 'New variable', amount: 0, date: elements.startDate.value });
+  editingEntries.variables = state.variables.length - 1;
   renderInputs();
   recalculate();
 });
@@ -100,6 +109,10 @@ function renderEntryList(type, container, template) {
   container.replaceChildren();
   state[type].forEach((entry, index) => {
     const node = template.content.firstElementChild.cloneNode(true);
+    const isEditing = editingEntries[type] === index;
+    node.classList.toggle('entry-card-editing', isEditing);
+    node.style.setProperty('--entry-accent', entryAccent(type, index));
+    node.prepend(createEntrySummary(type, entry, index));
     node.querySelector('.entry-label').value = entry.label;
     node.querySelector('.entry-amount').value = entry.amount;
     node.querySelector('.entry-date').value = entry.date;
@@ -115,11 +128,70 @@ function renderEntryList(type, container, template) {
     node.addEventListener('change', () => updateEntry(type, index, node));
     node.querySelector('.remove-entry').addEventListener('click', () => {
       state[type].splice(index, 1);
+      editingEntries[type] = null;
       renderInputs();
       recalculate();
     });
     container.appendChild(node);
   });
+}
+
+function createEntrySummary(type, entry, index) {
+  const summary = document.createElement('div');
+  const icon = document.createElement('div');
+  const copy = document.createElement('div');
+  const title = document.createElement('strong');
+  const details = document.createElement('small');
+  const amount = document.createElement('strong');
+  const menu = document.createElement('button');
+  const amountClass = Number(entry.amount) >= 0 ? 'amount-positive' : 'amount-negative';
+  const meta = type === 'constants' ? `${frequencyLabel(entry)} • Next: ${dateFormatter.format(nextEntryDate(entry))}` : dateFormatter.format(parseDate(entry.date));
+
+  summary.className = 'entry-summary';
+  icon.className = 'entry-summary-icon';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = entryIcon(type, index);
+  copy.className = 'entry-summary-copy';
+  title.textContent = entry.label || 'Untitled';
+  details.textContent = meta;
+  amount.className = `entry-summary-amount ${amountClass}`;
+  amount.textContent = currency.format(Number(entry.amount || 0));
+  menu.className = 'entry-menu-button';
+  menu.type = 'button';
+  menu.setAttribute('aria-label', `Edit ${entry.label || 'entry'}`);
+  menu.textContent = '⋮';
+  menu.addEventListener('click', () => {
+    editingEntries[type] = editingEntries[type] === index ? null : index;
+    renderInputs();
+  });
+
+  copy.append(title, details);
+  summary.append(icon, copy, amount, menu);
+  return summary;
+}
+
+function frequencyLabel(entry) {
+  if (entry.frequency === 'weekly') return 'Weekly';
+  if (entry.frequency === 'biweekly') return 'Biweekly';
+  if (entry.frequency === 'semiannual') return 'Every 6 months';
+  if (entry.frequency === 'custom-months') return `Every ${Math.max(1, Number.parseInt(entry.intervalMonths, 10) || 1)} months`;
+  return 'Monthly';
+}
+
+function nextEntryDate(entry) {
+  let date = parseDate(entry.date);
+  while (date < today) date = nextDate(date, entry);
+  return date;
+}
+
+function entryAccent(type, index) {
+  const colors = type === 'constants' ? ['#25c078', '#8a5cf6', '#f8b421', '#5c93ff', '#ff5c9a'] : ['#8a5cf6', '#ff6b7d', '#25c078', '#5c93ff'];
+  return colors[index % colors.length];
+}
+
+function entryIcon(type, index) {
+  if (type === 'variables') return ['🔧', '💸', '🎁', '🧾'][index % 4];
+  return ['💵', '🏠', '🛡️', '💡', '🛒'][index % 5];
 }
 
 function updateEntry(type, index, node) {
@@ -204,11 +276,20 @@ function recalculate() {
     balance += Number(event.amount);
     return { ...event, balance, timelineIndex: index + 1 };
   });
-  const balances = [Number(elements.startingBalance.value || 0), ...rows.map((row) => row.balance)];
+  const startingBalance = Number(elements.startingBalance.value || 0);
+  const balancePoints = [{ balance: startingBalance, date: start }, ...rows.map((row) => ({ balance: row.balance, date: row.date }))];
+  const maxPoint = balancePoints.reduce((max, point) => (point.balance > max.balance ? point : max), balancePoints[0]);
+  const minPoint = balancePoints.reduce((min, point) => (point.balance < min.balance ? point : min), balancePoints[0]);
   elements.projectedBalance.textContent = currency.format(balance);
-  elements.projectionRange.textContent = `${dateFormatter.format(start)} through ${dateFormatter.format(end)}`;
-  elements.maxBalance.textContent = `Max: ${currency.format(Math.max(...balances))}`;
-  elements.minBalance.textContent = `Min: ${currency.format(Math.min(...balances))}`;
+  elements.projectionRange.textContent = `on ${dateFormatter.format(end)}`;
+  elements.startingBalanceSummary.textContent = currency.format(startingBalance);
+  elements.startingBalanceDate.textContent = `on ${dateFormatter.format(start)}`;
+  elements.maxBalance.textContent = currency.format(maxPoint.balance);
+  elements.maxBalanceDate.textContent = `on ${dateFormatter.format(maxPoint.date)}`;
+  elements.minBalance.textContent = currency.format(minPoint.balance);
+  elements.minBalanceDate.textContent = `on ${dateFormatter.format(minPoint.date)}`;
+  elements.maxBalancePill.textContent = `Max: ${currency.format(maxPoint.balance)}`;
+  elements.minBalancePill.textContent = `Min: ${currency.format(minPoint.balance)}`;
   renderTimeline(rows);
   syncChartDates(start, end);
   drawChart(rows, Number(elements.startingBalance.value || 0), start, end);
