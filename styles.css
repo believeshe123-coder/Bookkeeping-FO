@@ -212,3 +212,40 @@ th { background: #eef3fb; color: var(--muted); font-size: 0.8rem; position: stic
   .workspace, .control-panel { grid-template-columns: 1fr; }
   .timeline-wrap { max-height: 420px; }
 }
+
+.chart-controls {
+  align-items: end;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(150px, 1fr)) auto auto;
+  margin-bottom: 0.85rem;
+}
+
+.chart-quick-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.chart-quick-ranges button {
+  padding: 0.65rem 0.8rem;
+}
+
+@media (max-width: 760px) {
+  .chart-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+.trend-toggle {
+  align-items: center;
+  align-self: center;
+  display: flex;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.trend-toggle input {
+  accent-color: var(--good);
+  width: auto;
+}
