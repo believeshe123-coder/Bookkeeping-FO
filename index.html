@@ -8,12 +8,45 @@
   </head>
   <body>
     <main class="app-shell">
+      <section class="top-metrics" aria-label="Forecast summary">
+        <article class="metric-card metric-card-primary" aria-live="polite">
+          <div>
+            <span>Projected balance</span>
+            <strong id="projectedBalance">$0.00</strong>
+            <small id="projectionRange">Today through forecast end</small>
+          </div>
+          <svg class="metric-sparkline" viewBox="0 0 120 68" aria-hidden="true">
+            <path class="sparkline-fill" d="M0 68H120V11c-11 13-18 5-27 14s-11 21-25 20-14 18-29 16-17 9-39 7Z" />
+            <path class="sparkline-line" d="M0 67c22 2 24-9 39-7s15-17 29-16 16-11 25-20 16-1 27-14" />
+          </svg>
+        </article>
+        <article class="metric-card">
+          <div>
+            <span>Starting balance</span>
+            <strong id="startingBalanceSummary">$0.00</strong>
+            <small id="startingBalanceDate">on Today</small>
+          </div>
+          <div class="metric-icon wallet-icon" aria-hidden="true">▱</div>
+        </article>
+        <article class="metric-card">
+          <div>
+            <span>Max projected balance</span>
+            <strong id="maxBalance">$0.00</strong>
+            <small id="maxBalanceDate">on Today</small>
+          </div>
+          <div class="metric-icon trend-up-icon" aria-hidden="true">⌁</div>
+        </article>
+        <article class="metric-card">
+          <div>
+            <span>Min projected balance</span>
+            <strong id="minBalance">$0.00</strong>
+            <small id="minBalanceDate">on Today</small>
+          </div>
+          <div class="metric-icon trend-down-icon" aria-hidden="true">⌁</div>
+        </article>
+      </section>
+
       <section class="control-panel" aria-label="Forecast settings">
-        <div class="summary-card" aria-live="polite">
-          <span>Projected balance</span>
-          <strong id="projectedBalance">$0.00</strong>
-          <small id="projectionRange">Today through forecast end</small>
-        </div>
         <label>
           Starting balance
           <input id="startingBalance" type="number" step="0.01" value="600" />
@@ -34,6 +67,20 @@
       </section>
 
       <section class="workspace">
+        <aside class="input-rail recurring-rail" aria-label="Recurring inputs">
+          <section class="panel constants-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Constants</p>
+                <h2>Recurring items</h2>
+              </div>
+              <button id="addConstant" class="add-entry-button" type="button">+ Add</button>
+            </div>
+            <div id="constantsList" class="entry-list"></div>
+            <button class="view-all-button" type="button">View all recurring items <span>›</span></button>
+          </section>
+        </aside>
+
         <section class="panel output-panel">
           <div class="panel-heading">
             <div>
@@ -41,8 +88,8 @@
               <h2>Projected balance</h2>
             </div>
             <div class="metric-pills">
-              <span id="maxBalance">Max: $0.00</span>
-              <span id="minBalance">Min: $0.00</span>
+              <span id="maxBalancePill">Max: $0.00</span>
+              <span id="minBalancePill">Min: $0.00</span>
             </div>
           </div>
           <div class="chart-controls" aria-label="Graph time range controls">
@@ -85,29 +132,20 @@
           </div>
         </section>
 
-        <aside class="right-rail" aria-label="Inputs">
-          <section class="panel constants-panel">
-            <div class="panel-heading">
-              <div>
-                <p class="eyebrow">Constants</p>
-                <h2>Recurring items</h2>
-              </div>
-              <button id="addConstant" type="button">Add</button>
-            </div>
-            <div id="constantsList" class="entry-list"></div>
-          </section>
-
+        <aside class="input-rail one-time-rail" aria-label="One-time change inputs">
           <section class="panel variables-panel">
             <div class="panel-heading">
               <div>
                 <p class="eyebrow">Variables</p>
                 <h2>One-time changes</h2>
               </div>
-              <button id="addVariable" type="button">Add</button>
+              <button id="addVariable" class="add-entry-button" type="button">+ Add</button>
             </div>
             <div id="variablesList" class="entry-list"></div>
+            <button class="view-all-button" type="button">View all one-time changes <span>›</span></button>
           </section>
         </aside>
+
       </section>
     </main>
 
